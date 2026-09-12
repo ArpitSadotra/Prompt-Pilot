@@ -15,19 +15,19 @@ export default function DashboardPage() {
 
   const cards = [
     {
-      icon: '✨',
+      icon: '',
       title: 'Code Playground',
       desc: 'Generate code from prompts or get explanations for any code snippet.',
       path: '/playground',
     },
     {
-      icon: '🤖',
+      icon: '',
       title: 'AI Agent',
       desc: 'Give complex tasks to the agent. It plans and executes step by step.',
       path: '/agent',
     },
     {
-      icon: '🔍',
+      icon: '',
       title: 'RAG Chat',
       desc: 'Upload your codebase and ask questions. Get context-aware answers.',
       path: '/rag',
@@ -62,11 +62,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="dashboard-info">
-            <h2 className="dashboard-info-title">🚀 How It Works</h2>
+            <h2 className="dashboard-info-title"> How It Works</h2>
             <ul className="dashboard-info-list">
-              <li>⚡ <strong>Playground</strong> - Type a prompt and get instant code generation or paste code for explanation</li>
-              <li>🤖 <strong>AI Agent</strong> - Describe a complex task and watch the agent execute it step by step</li>
-              <li>🔍 <strong>RAG Chat</strong> - Upload your code files and ask questions about your specific codebase</li>
+              <li> <strong>Playground</strong> - Type a prompt and get instant code generation or paste code for explanation</li>
+              <li> <strong>AI Agent</strong> - Describe a complex task and watch the agent execute it step by step</li>
+              <li> <strong>RAG Chat</strong> - Upload your code files and ask questions about your specific codebase</li>
             </ul>
           </div>
         </main>

@@ -96,7 +96,7 @@ export default function RAGPage() {
         <Sidebar />
         <main className="main-content">
           <div className="rag-header animate-fadeIn">
-            <h1 className="rag-title">🔍 RAG Chat</h1>
+            <h1 className="rag-title"> RAG Chat</h1>
             <p className="text-muted text-sm">
               Upload your codebase and ask questions. AI answers based on your actual code.
             </p>
@@ -208,7 +208,7 @@ export default function RAGPage() {
               <div className="rag-messages">
                 {messages.length === 0 ? (
                   <div className="rag-empty">
-                    <span style={{ fontSize: '40px' }}>🔍</span>
+                    <span style={{ fontSize: '40px' }}></span>
                     <p className="text-muted text-sm">
                       {documents.length === 0
                         ? 'Upload your code files first, then ask questions about them.'
@@ -249,7 +249,7 @@ export default function RAGPage() {
 
                 {loading && (
                   <div className="rag-message assistant">
-                    <span className="rag-message-role">🤖 AI</span>
+                    <span className="rag-message-role"> AI</span>
                     <div className="rag-message-content" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <div className="spinner spinner-sm"></div>
                       Searching your code...

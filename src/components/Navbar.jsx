@@ -30,7 +30,7 @@ export default function Navbar() {
     <>
       <nav className="navbar">
         <div className="navbar-container">
-          <Link to="/" className="navbar-logo">⚡ PromptPilot</Link>
+          <Link to="/" className="navbar-logo">PromptPilot</Link>
 
           <ul className="navbar-links">
             {navLinks.map((link) => (

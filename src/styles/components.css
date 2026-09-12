@@ -1,13 +1,13 @@
 /* ===== NAVBAR ===== */
 .navbar {
-  background: var(--color-bg-glass);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--color-border);
+  background: #ffffff;
+  border-bottom: 2px solid var(--color-blue-border);
   position: sticky;
   top: 0;
   z-index: var(--z-navbar);
   padding: var(--spacing-md) var(--spacing-lg);
   height: 64px;
+  box-shadow: 0 1px 8px rgba(37, 99, 235, 0.08);
 }
 
 .navbar-container {
@@ -21,12 +21,10 @@
 
 .navbar-logo {
   font-size: var(--font-size-xl);
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 800;
+  color: var(--color-accent);
   text-decoration: none;
+  letter-spacing: -0.5px;
 }
 
 .navbar-links {
@@ -42,57 +40,75 @@
   font-weight: 500;
   font-size: var(--font-size-sm);
   transition: color var(--transition-fast);
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
 }
 
-.navbar-link:hover,
+.navbar-link:hover {
+  color: var(--color-accent);
+  background: var(--color-blue-light);
+}
+
 .navbar-link.active {
   color: var(--color-accent);
+  background: var(--color-blue-light);
+  font-weight: 600;
 }
 
 .navbar-logout {
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
+  background: var(--color-red-light);
+  border: 1px solid var(--color-red-border);
+  color: var(--color-accent-red);
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: color var(--transition-fast);
-  padding: 0;
+  transition: all var(--transition-fast);
+  padding: 6px 14px;
+  border-radius: var(--border-radius-md);
 }
 
 .navbar-logout:hover {
-  color: var(--color-accent-secondary);
+  background: var(--color-accent-red);
+  color: #ffffff;
 }
 
 .navbar-mobile-btn {
   display: none;
-  background: none;
-  border: none;
+  background: var(--color-blue-light);
+  border: 1px solid var(--color-blue-border);
   color: var(--color-accent);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
+  border-radius: var(--border-radius-md);
 }
 
 .navbar-mobile-menu {
-  background: var(--color-dark-secondary);
-  border-top: 1px solid var(--color-border);
+  background: #ffffff;
+  border-top: 2px solid var(--color-blue-border);
   padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 .navbar-mobile-menu a,
 .navbar-mobile-menu button {
-  color: var(--color-text);
+  color: var(--color-text-muted);
   text-decoration: none;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-md);
   font-size: var(--font-size-base);
   background: none;
   border: none;
   text-align: left;
   cursor: pointer;
   font-weight: 500;
+  border-radius: var(--border-radius-md);
+}
+
+.navbar-mobile-menu a:hover {
+  background: var(--color-blue-light);
+  color: var(--color-accent);
 }
 
 @media (max-width: 768px) {
@@ -104,8 +120,7 @@
 .sidebar {
   width: 240px;
   min-height: calc(100vh - 64px);
-  background: var(--color-bg-glass);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
   border-right: 1px solid var(--color-border);
   padding: var(--spacing-lg);
   position: sticky;
@@ -118,7 +133,7 @@
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 4px;
   list-style: none;
 }
 
@@ -136,14 +151,16 @@
 }
 
 .sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-blue-light);
   color: var(--color-accent);
 }
 
 .sidebar-item.active {
-  background: rgba(0, 217, 255, 0.15);
+  background: var(--color-blue-light);
   color: var(--color-accent);
   border-left: 3px solid var(--color-accent);
+  padding-left: calc(var(--spacing-md) - 3px);
+  font-weight: 600;
 }
 
 /* ===== LAYOUT ===== */
@@ -157,6 +174,7 @@
   padding: var(--spacing-lg);
   overflow-y: auto;
   max-width: calc(100vw - 240px);
+  background: #f1f5f9;
 }
 
 @media (max-width: 768px) {
@@ -172,23 +190,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
+  background: var(--color-blue-light);
+  border: 1px solid var(--color-blue-border);
+  color: var(--color-accent);
   cursor: pointer;
   transition: all var(--transition-fast);
   flex-shrink: 0;
 }
 
 .icon-btn:hover {
-  background: rgba(0, 217, 255, 0.1);
-  color: var(--color-accent);
+  background: var(--color-accent);
+  color: #ffffff;
   border-color: var(--color-accent);
 }
 
 /* ===== CARD ===== */
 .card {
-  background: var(--color-dark-secondary);
+  background: #ffffff;
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-lg);
@@ -196,19 +214,19 @@
 }
 
 .card:hover {
-  border-color: rgba(0, 217, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 217, 255, 0.05);
+  border-color: var(--color-blue-border);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
 }
 
 /* ===== CODE BLOCK ===== */
 .code-block {
-  background: #0d1117;
-  border: 1px solid var(--color-border);
+  background: #1e1e2e;
+  border: 1px solid var(--color-blue-border);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
   font-family: 'Courier New', monospace;
   font-size: var(--font-size-sm);
-  color: #e6edf3;
+  color: #cdd6f4;
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-word;
@@ -225,8 +243,9 @@
   padding: var(--spacing-md);
   border-radius: var(--border-radius-md);
   border: 1px solid var(--color-border);
-  background: var(--color-dark-secondary);
+  background: #ffffff;
   margin-bottom: var(--spacing-sm);
+  transition: all var(--transition-fast);
 }
 
 .step-number {
@@ -242,18 +261,21 @@
 }
 
 .step-number.pending {
-  background: var(--color-dark-tertiary);
-  color: var(--color-text-muted);
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 2px solid #e2e8f0;
 }
 
 .step-number.running {
-  background: rgba(0, 217, 255, 0.2);
+  background: var(--color-blue-light);
   color: var(--color-accent);
+  border: 2px solid var(--color-blue-border);
 }
 
 .step-number.done {
-  background: rgba(0, 217, 255, 0.3);
-  color: var(--color-accent);
+  background: var(--color-green-light);
+  color: var(--color-accent-secondary);
+  border: 2px solid var(--color-green-border);
 }
 
 .step-text {
@@ -264,4 +286,5 @@
 
 .step-text.active {
   color: var(--color-text);
+  font-weight: 500;
 }

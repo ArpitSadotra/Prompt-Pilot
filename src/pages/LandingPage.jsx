@@ -5,22 +5,22 @@ import { Code, Bot, BookOpen, ArrowRight } from 'lucide-react'
 export default function LandingPage() {
   const features = [
     {
-      icon: '✨',
+      icon: '',
       title: 'Code Generation',
       desc: 'Generate clean, production-ready code from natural language prompts using Google Gemini AI.',
     },
     {
-      icon: '📚',
+      icon: '',
       title: 'Code Explanation',
       desc: 'Paste any code and get a clear, beginner-friendly explanation of what it does and how it works.',
     },
     {
-      icon: '🤖',
+      icon: '',
       title: 'AI Agent',
       desc: 'Give complex tasks to the AI agent. It breaks them into steps and executes each one sequentially.',
     },
     {
-      icon: '🔍',
+      icon: '',
       title: 'RAG Chat',
       desc: 'Upload your codebase and chat with it. Get answers based on your actual code using vector search.',
     },

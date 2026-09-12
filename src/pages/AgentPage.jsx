@@ -52,7 +52,7 @@ export default function AgentPage() {
         <Sidebar />
         <main className="main-content">
           <div className="agent-header animate-fadeIn">
-            <h1 className="agent-title">🤖 AI Agent</h1>
+            <h1 className="agent-title"> AI Agent</h1>
             <p className="text-muted text-sm">
               Describe a complex task. The agent will plan and execute it step by step.
             </p>

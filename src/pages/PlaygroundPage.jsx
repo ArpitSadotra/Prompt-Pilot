@@ -58,13 +58,13 @@ export default function PlaygroundPage() {
               className={`mode-tab ${mode === 'generate' ? 'active' : ''}`}
               onClick={() => { setMode('generate'); handleReset() }}
             >
-              ✨ Generate Code
+               Generate Code
             </button>
             <button
               className={`mode-tab ${mode === 'explain' ? 'active' : ''}`}
               onClick={() => { setMode('explain'); handleReset() }}
             >
-              📚 Explain Code
+               Explain Code
             </button>
           </div>
 
@@ -79,7 +79,7 @@ export default function PlaygroundPage() {
             <div className="editor-panel">
               <div className="panel-header">
                 <span className="panel-title">
-                  {mode === 'generate' ? '📝 Your Prompt' : '💻 Your Code'}
+                  {mode === 'generate' ? ' Your Prompt' : ' Your Code'}
                 </span>
                 <button onClick={handleReset} className="icon-btn" title="Reset">
                   <RotateCcw size={16} />
@@ -122,7 +122,7 @@ export default function PlaygroundPage() {
             <div className="editor-panel">
               <div className="panel-header">
                 <span className="panel-title">
-                  {mode === 'generate' ? '⚡ Generated Code' : '📖 Explanation'}
+                  {mode === 'generate' ? ' Generated Code' : ' Explanation'}
                 </span>
                 <div className="panel-actions">
                   {output && (
