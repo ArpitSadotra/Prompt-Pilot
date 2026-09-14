@@ -92,7 +92,7 @@ Example: ["Step 1: Setup", "Step 2: Models", "Step 3: Logic", "Step 4: Testing"]
 JSON:`
 
   try {
-    const response = await callNemotron(prompt, true)
+    const response = await callNemotron(prompt)
 
     const cleaned = response
       .replace(/```json/gi, '')
@@ -138,5 +138,5 @@ ${step}
 
 Provide complete, production-ready code.`
 
-  return await callNemotron(prompt, true)
+  return await callNemotron(prompt)
 }

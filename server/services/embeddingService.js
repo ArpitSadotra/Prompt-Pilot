@@ -1,124 +1,57 @@
-import { generateEmbedding, chunkText } from './embeddingService.js'
-import { getPineconeIndex } from '../config/pinecone.js'
-import { generateWithContext } from './aiService.js'
-import Document from '../models/Document.js'
+import axios from 'axios'
 
-export const uploadDocument = async (userId, title, content) => {
+export const generateEmbedding = async (text) => {
+  const cleanText = text.substring(0, 2000).trim()
+
   try {
-    const index = getPineconeIndex()
-    const chunks = chunkText(content, 500)
+    console.log('Generating embedding with gemini-embedding-2...')
 
-    if (chunks.length === 0) {
-      throw new Error('No content to embed')
-    }
-
-    const vectorIds = []
-
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i]
-      if (!chunk || chunk.trim().length < 10) continue
-
-      const embedding = await generateEmbedding(chunk)
-
-      console.log(`Chunk ${i} embedding dimensions: ${embedding.length}`)
-
-      const vectorId = `${userId}_${Date.now()}_${i}`
-      vectorIds.push(vectorId)
-
-      await index.upsert([
-        {
-          id: vectorId,
-          values: embedding,
-          metadata: {
-            text: chunk,
-            userId: userId.toString(),
-            title,
-            chunkIndex: i,
-          },
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:embedContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        content: {
+          parts: [{ text: cleanText }],
         },
-      ])
-    }
-
-    const document = await Document.create({
-      userId,
-      title,
-      content,
-      chunks: vectorIds.length,
-      vectorIds,
-    })
-
-    return document
-  } catch (error) {
-    console.error('Upload error:', error.message)
-    throw error
-  }
-}
-
-export const searchDocuments = async (userId, query, topK = 3) => {
-  try {
-    const index = getPineconeIndex()
-    const queryEmbedding = await generateEmbedding(query)
-
-    const results = await index.query({
-      vector: queryEmbedding,
-      topK,
-      filter: {
-        userId: { $eq: userId.toString() },
       },
-      includeMetadata: true,
-    })
-
-    if (!results.matches || results.matches.length === 0) {
-      return ''
-    }
-
-    return results.matches
-      .filter((match) => match.metadata?.text)
-      .map((match) => match.metadata.text)
-      .join('\n\n')
-  } catch (error) {
-    console.error('Search error:', error.message)
-    throw error
-  }
-}
-
-export const deleteDocument = async (userId, documentId) => {
-  try {
-    const document = await Document.findOne({ _id: documentId, userId })
-
-    if (!document) {
-      throw new Error('Document not found')
-    }
-
-    const index = getPineconeIndex()
-
-    if (document.vectorIds && document.vectorIds.length > 0) {
-      await index.deleteMany(document.vectorIds)
-    }
-
-    await Document.findByIdAndDelete(documentId)
-    return true
-  } catch (error) {
-    console.error('Delete error:', error.message)
-    throw error
-  }
-}
-
-export const ragChat = async (userId, question) => {
-  try {
-    const context = await searchDocuments(userId, question)
-
-    if (!context || context.trim() === '') {
-      return {
-        answer: 'No relevant code found. Please upload your code files first.',
-        context: '',
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000,
       }
+    )
+
+    const values = response.data?.embedding?.values
+
+    if (values && values.length > 0) {
+      console.log(`✅ Embedding generated: ${values.length} dimensions`)
+      return values
     }
 
-    const answer = await generateWithContext(question, context)
-    return { answer, context }
+    throw new Error('Empty embedding returned')
   } catch (error) {
-    console.error('RAG chat error:', error.message)
-    throw error
+    console.error('Embedding error:', error.response?.data || error.message)
+    throw new Error('Failed to generate embedding')
   }
+}
+
+export const chunkText = (text, chunkSize = 500) => {
+  if (!text || text.trim().length === 0) return []
+
+  const chunks = []
+  const lines = text.split('\n')
+  let currentChunk = ''
+
+  for (const line of lines) {
+    if ((currentChunk + '\n' + line).length > chunkSize && currentChunk) {
+      chunks.push(currentChunk.trim())
+      currentChunk = line
+    } else {
+      currentChunk += '\n' + line
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push(currentChunk.trim())
+  }
+
+  return chunks.length > 0 ? chunks : [text]
 }
