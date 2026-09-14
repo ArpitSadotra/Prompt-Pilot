@@ -1,29 +1,78 @@
 import axios from 'axios'
 
-const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent`
-
 export const generateEmbedding = async (text) => {
   try {
+    // Clean and limit text
+    const cleanText = text.substring(0, 2000).trim()
+
     const response = await axios.post(
-      `${EMBEDDING_URL}?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
       {
         model: 'models/text-embedding-004',
         content: {
-          parts: [{ text: text.substring(0, 2000) }],
+          role: 'user',
+          parts: [{ text: cleanText }],
         },
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
       }
     )
 
     const values = response.data?.embedding?.values
 
     if (!values || values.length === 0) {
-      throw new Error('No embedding returned')
+      throw new Error('Empty embedding returned')
     }
 
+    console.log(`✅ Embedding generated: ${values.length} dimensions`)
     return values
   } catch (error) {
     console.error('Embedding error:', error.response?.data || error.message)
-    throw new Error('Failed to generate embedding')
+
+    // Try fallback model
+    return await generateEmbeddingFallback(text)
+  }
+}
+
+const generateEmbeddingFallback = async (text) => {
+  try {
+    console.log('⚠️ Trying embedding fallback model...')
+
+    const cleanText = text.substring(0, 2000).trim()
+
+    // Try embedding-001 as fallback
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        model: 'models/embedding-001',
+        content: {
+          role: 'user',
+          parts: [{ text: cleanText }],
+        },
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    )
+
+    const values = response.data?.embedding?.values
+
+    if (!values || values.length === 0) {
+      throw new Error('Empty fallback embedding returned')
+    }
+
+    console.log(`✅ Fallback embedding generated: ${values.length} dimensions`)
+    return values
+  } catch (error) {
+    console.error('Fallback embedding error:', error.response?.data || error.message)
+    throw new Error('All embedding models failed')
   }
 }
 
