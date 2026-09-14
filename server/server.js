@@ -53,3 +53,17 @@ app.listen(PORT, () => {
   console.log(`\n🚀 Server running on port ${PORT}`)
   console.log(`📝 Environment: ${process.env.NODE_ENV}`)
 })
+
+app.get('/api/test-embedding', async (req, res) => {
+  try {
+    const { generateEmbedding } = await import('./services/embeddingService.js')
+    const embedding = await generateEmbedding('Hello world test')
+    res.json({
+      success: true,
+      dimensions: embedding.length,
+      first5Values: embedding.slice(0, 5),
+    })
+  } catch (error) {
+    res.json({ success: false, error: error.message })
+  }
+})

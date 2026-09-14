@@ -1,100 +1,124 @@
-import axios from 'axios'
+import { generateEmbedding, chunkText } from './embeddingService.js'
+import { getPineconeIndex } from '../config/pinecone.js'
+import { generateWithContext } from './aiService.js'
+import Document from '../models/Document.js'
 
-export const generateEmbedding = async (text) => {
+export const uploadDocument = async (userId, title, content) => {
   try {
-    // Clean and limit text
-    const cleanText = text.substring(0, 2000).trim()
+    const index = getPineconeIndex()
+    const chunks = chunkText(content, 500)
 
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        model: 'models/text-embedding-004',
-        content: {
-          role: 'user',
-          parts: [{ text: cleanText }],
-        },
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 30000,
-      }
-    )
-
-    const values = response.data?.embedding?.values
-
-    if (!values || values.length === 0) {
-      throw new Error('Empty embedding returned')
+    if (chunks.length === 0) {
+      throw new Error('No content to embed')
     }
 
-    console.log(`✅ Embedding generated: ${values.length} dimensions`)
-    return values
-  } catch (error) {
-    console.error('Embedding error:', error.response?.data || error.message)
+    const vectorIds = []
 
-    // Try fallback model
-    return await generateEmbeddingFallback(text)
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      if (!chunk || chunk.trim().length < 10) continue
+
+      const embedding = await generateEmbedding(chunk)
+
+      console.log(`Chunk ${i} embedding dimensions: ${embedding.length}`)
+
+      const vectorId = `${userId}_${Date.now()}_${i}`
+      vectorIds.push(vectorId)
+
+      await index.upsert([
+        {
+          id: vectorId,
+          values: embedding,
+          metadata: {
+            text: chunk,
+            userId: userId.toString(),
+            title,
+            chunkIndex: i,
+          },
+        },
+      ])
+    }
+
+    const document = await Document.create({
+      userId,
+      title,
+      content,
+      chunks: vectorIds.length,
+      vectorIds,
+    })
+
+    return document
+  } catch (error) {
+    console.error('Upload error:', error.message)
+    throw error
   }
 }
 
-const generateEmbeddingFallback = async (text) => {
+export const searchDocuments = async (userId, query, topK = 3) => {
   try {
-    console.log('⚠️ Trying embedding fallback model...')
+    const index = getPineconeIndex()
+    const queryEmbedding = await generateEmbedding(query)
 
-    const cleanText = text.substring(0, 2000).trim()
-
-    // Try embedding-001 as fallback
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/embedding-001:embedContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        model: 'models/embedding-001',
-        content: {
-          role: 'user',
-          parts: [{ text: cleanText }],
-        },
+    const results = await index.query({
+      vector: queryEmbedding,
+      topK,
+      filter: {
+        userId: { $eq: userId.toString() },
       },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        timeout: 30000,
-      }
-    )
+      includeMetadata: true,
+    })
 
-    const values = response.data?.embedding?.values
-
-    if (!values || values.length === 0) {
-      throw new Error('Empty fallback embedding returned')
+    if (!results.matches || results.matches.length === 0) {
+      return ''
     }
 
-    console.log(`✅ Fallback embedding generated: ${values.length} dimensions`)
-    return values
+    return results.matches
+      .filter((match) => match.metadata?.text)
+      .map((match) => match.metadata.text)
+      .join('\n\n')
   } catch (error) {
-    console.error('Fallback embedding error:', error.response?.data || error.message)
-    throw new Error('All embedding models failed')
+    console.error('Search error:', error.message)
+    throw error
   }
 }
 
-export const chunkText = (text, chunkSize = 500) => {
-  if (!text || text.trim().length === 0) return []
+export const deleteDocument = async (userId, documentId) => {
+  try {
+    const document = await Document.findOne({ _id: documentId, userId })
 
-  const chunks = []
-  const lines = text.split('\n')
-  let currentChunk = ''
-
-  for (const line of lines) {
-    if ((currentChunk + '\n' + line).length > chunkSize && currentChunk) {
-      chunks.push(currentChunk.trim())
-      currentChunk = line
-    } else {
-      currentChunk += '\n' + line
+    if (!document) {
+      throw new Error('Document not found')
     }
-  }
 
-  if (currentChunk.trim()) {
-    chunks.push(currentChunk.trim())
-  }
+    const index = getPineconeIndex()
 
-  return chunks.length > 0 ? chunks : [text]
+    if (document.vectorIds && document.vectorIds.length > 0) {
+      await index.deleteMany(document.vectorIds)
+    }
+
+    await Document.findByIdAndDelete(documentId)
+    return true
+  } catch (error) {
+    console.error('Delete error:', error.message)
+    throw error
+  }
+}
+
+export const ragChat = async (userId, question) => {
+  try {
+    const context = await searchDocuments(userId, question)
+
+    if (!context || context.trim() === '') {
+      return {
+        answer: 'No relevant code found. Please upload your code files first.',
+        context: '',
+      }
+    }
+
+    const answer = await generateWithContext(question, context)
+    return { answer, context }
+  } catch (error) {
+    console.error('RAG chat error:', error.message)
+    throw error
+  }
 }

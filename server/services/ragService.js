@@ -4,91 +4,121 @@ import { generateWithContext } from './aiService.js'
 import Document from '../models/Document.js'
 
 export const uploadDocument = async (userId, title, content) => {
-  const index = getPineconeIndex()
+  try {
+    const index = getPineconeIndex()
+    const chunks = chunkText(content, 500)
 
-  const chunks = chunkText(content, 500)
-  const vectorIds = []
+    if (chunks.length === 0) {
+      throw new Error('No content to embed')
+    }
 
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i]
-    const embedding = await generateEmbedding(chunk)
+    const vectorIds = []
 
-    const vectorId = `${userId}_${Date.now()}_${i}`
-    vectorIds.push(vectorId)
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      if (!chunk || chunk.trim().length < 10) continue
 
-    await index.upsert([
-      {
-        id: vectorId,
-        values: embedding,
-        metadata: {
-          text: chunk,
-          userId: userId.toString(),
-          title,
-          chunkIndex: i,
+      const embedding = await generateEmbedding(chunk)
+
+      console.log(`Chunk ${i} embedding dimensions: ${embedding.length}`)
+
+      const vectorId = `${userId}_${Date.now()}_${i}`
+      vectorIds.push(vectorId)
+
+      await index.upsert([
+        {
+          id: vectorId,
+          values: embedding,
+          metadata: {
+            text: chunk,
+            userId: userId.toString(),
+            title,
+            chunkIndex: i,
+          },
         },
-      },
-    ])
+      ])
+    }
+
+    const document = await Document.create({
+      userId,
+      title,
+      content,
+      chunks: vectorIds.length,
+      vectorIds,
+    })
+
+    return document
+  } catch (error) {
+    console.error('Upload error:', error.message)
+    throw error
   }
-
-  const document = await Document.create({
-    userId,
-    title,
-    content,
-    chunks: chunks.length,
-    vectorIds,
-  })
-
-  return document
 }
 
 export const searchDocuments = async (userId, query, topK = 3) => {
-  const index = getPineconeIndex()
+  try {
+    const index = getPineconeIndex()
+    const queryEmbedding = await generateEmbedding(query)
 
-  const queryEmbedding = await generateEmbedding(query)
+    const results = await index.query({
+      vector: queryEmbedding,
+      topK,
+      filter: {
+        userId: { $eq: userId.toString() },
+      },
+      includeMetadata: true,
+    })
 
-  const results = await index.query({
-    vector: queryEmbedding,
-    topK,
-    filter: {
-      userId: userId.toString(),
-    },
-    includeMetadata: true,
-  })
+    if (!results.matches || results.matches.length === 0) {
+      return ''
+    }
 
-  return results.matches.map((match) => match.metadata.text).join('\n\n')
+    return results.matches
+      .filter((match) => match.metadata?.text)
+      .map((match) => match.metadata.text)
+      .join('\n\n')
+  } catch (error) {
+    console.error('Search error:', error.message)
+    throw error
+  }
 }
 
 export const deleteDocument = async (userId, documentId) => {
-  const document = await Document.findOne({
-    _id: documentId,
-    userId,
-  })
+  try {
+    const document = await Document.findOne({ _id: documentId, userId })
 
-  if (!document) {
-    throw new Error('Document not found')
+    if (!document) {
+      throw new Error('Document not found')
+    }
+
+    const index = getPineconeIndex()
+
+    if (document.vectorIds && document.vectorIds.length > 0) {
+      await index.deleteMany(document.vectorIds)
+    }
+
+    await Document.findByIdAndDelete(documentId)
+    return true
+  } catch (error) {
+    console.error('Delete error:', error.message)
+    throw error
   }
-
-  const index = getPineconeIndex()
-  if (document.vectorIds.length > 0) {
-    await index.deleteMany(document.vectorIds)
-  }
-
-  await Document.findByIdAndDelete(documentId)
-
-  return true
 }
 
 export const ragChat = async (userId, question) => {
-  const context = await searchDocuments(userId, question)
+  try {
+    const context = await searchDocuments(userId, question)
 
-  if (!context || context.trim() === '') {
-    return {
-      answer: 'No relevant documents found. Please upload your code first.',
-      context: '',
+    if (!context || context.trim() === '') {
+      return {
+        answer: 'No relevant code found. Please upload your code files first.',
+        context: '',
+      }
     }
+
+    const answer = await generateWithContext(question, context)
+    return { answer, context }
+  } catch (error) {
+    console.error('RAG chat error:', error.message)
+    throw error
   }
-
-  const answer = await generateWithContext(question, context)
-
-  return { answer, context }
 }
