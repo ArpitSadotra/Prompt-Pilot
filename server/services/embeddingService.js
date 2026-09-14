@@ -1,21 +1,26 @@
 import axios from 'axios'
 
-const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent`;
+const EMBEDDING_URL = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent`
 
 export const generateEmbedding = async (text) => {
   try {
     const response = await axios.post(
       `${EMBEDDING_URL}?key=${process.env.GEMINI_API_KEY}`,
       {
-        model: 'models/gemini-embedding-001',
+        model: 'models/text-embedding-004',
         content: {
-          parts: [{ text }],
+          parts: [{ text: text.substring(0, 2000) }],
         },
-        outputDimensionality: 768,
       }
     )
 
-    return response.data.embedding.values
+    const values = response.data?.embedding?.values
+
+    if (!values || values.length === 0) {
+      throw new Error('No embedding returned')
+    }
+
+    return values
   } catch (error) {
     console.error('Embedding error:', error.response?.data || error.message)
     throw new Error('Failed to generate embedding')
@@ -23,17 +28,18 @@ export const generateEmbedding = async (text) => {
 }
 
 export const chunkText = (text, chunkSize = 500) => {
-  const chunks = []
-  const sentences = text.split(/[.\n]+/).filter((s) => s.trim().length > 0)
+  if (!text || text.trim().length === 0) return []
 
+  const chunks = []
+  const lines = text.split('\n')
   let currentChunk = ''
 
-  for (const sentence of sentences) {
-    if ((currentChunk + sentence).length > chunkSize && currentChunk) {
+  for (const line of lines) {
+    if ((currentChunk + '\n' + line).length > chunkSize && currentChunk) {
       chunks.push(currentChunk.trim())
-      currentChunk = sentence
+      currentChunk = line
     } else {
-      currentChunk += ' ' + sentence
+      currentChunk += '\n' + line
     }
   }
 
